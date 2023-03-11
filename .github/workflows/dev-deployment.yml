@@ -4,8 +4,6 @@ on:
   workflow_dispatch: 
     
 jobs:
-    notifications:
-      runs-on: ubuntu-latest
       
     compile:
         runs-on: ubuntu-latest
