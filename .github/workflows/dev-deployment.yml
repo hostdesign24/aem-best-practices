@@ -1,1 +1,21 @@
+name: Deploy to Dev Environments
 
+on:
+  workflow_dispatch: 
+    
+jobs:
+    notifications:
+      runs-on: ubuntu-latest
+      
+    compile:
+        runs-on: ubuntu-latest
+        
+        steps:
+          - uses: actions/checkout@v3
+          
+          - name: Install JDK 11
+            uses: actions/setup-java@v3
+            with:
+              java-version: '11'
+              distribution: 'temurin'
+            
