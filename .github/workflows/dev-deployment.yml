@@ -65,6 +65,48 @@ jobs:
         - name: awsCreateEc2Snapshot creating snapshot
           run: echo "In progress" 
     
+    deploy_aem_devm_author: # It will be template, can be reused to other environments 
+      name: Deploying DEVM Author
+      runs-on: ubuntu-latest
+      steps:
+        - name: deploy
+          run: echo "In progress"
+          
+    deploy_aem_devm_publish: # It will be template, can be reused to other environments 
+      name: Deploying DEVM Publish
+      runs-on: ubuntu-latest
+      steps:
+        - name: deploy
+          run: echo "In progress"
+          
+    post_deployment_actions_on_author:
+      name: Run post deployment actions on Author
+      runs-on: ubuntu-latest
+      steps:
+        - name: deploy
+          run: echo "In progress"
+           
+    trigger_smoke_tests_devm: # It will be template, can be reused to other environments 
+      name: Run smoke tests
+      runs-on: ubuntu-latest
+      steps:
+        - name: deploy
+          run: echo "In progress"
+          
+    update_jira_information:  
+      name: Update to JIRA APWIDE
+      runs-on: ubuntu-latest
+      steps:
+        - name: deploy
+          run: curl -u ${{ secrets.JIRA_USERNAME }}:${{ secrets.JIRA_PASSWORD }} --location --request PUT https://jira.mercedes-benz.io/rest/apwide/tem/1.1/deployment?application=VANS&category=Dev&time=1678458520108 
+    
+    execute_seamless_releases:
+      name: Execute Seamless Release Update
+      runs-on: ubuntu-latest
+      steps:
+        - name: deploy
+          run: echo "In progress" # "/system/console/jmx/com.daimler.vans.cq.models.seamless.impl:type=SeamlessReleaseConfigUpdateMBeanImpl/op/executeReleaseUpdate/"
+    
     send_teams_notifiation_end:
         name: Send Teams Notification - End
         runs-on: ubuntu-latest
