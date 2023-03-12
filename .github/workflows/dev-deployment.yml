@@ -1,11 +1,44 @@
 name: Deploy to Dev Environments
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
+    # Input variables for pipelines
+    inputs:
+      targetServer: 
+        type: choice
+        description: Specifies the deployment target environment/server
+        options: 
+          - DEVM
+          - INTP
+          - INT
+      version:
+        description: "Specify the version to deploy"
+        default: "2.60.0-SNAPSHOT"
+      bypassCodeFreeze:
+        type: boolean
+        description: "If enabled, the code-freeze check will be bypassed"
+        default: true
     
 jobs:
+  
+    send_teams_notifiation_start:
+      name: Send Teams Notification - Start
+      runs-on: ubuntu-latest
+      steps:
+        - name: Sending message
+          uses: skitionek/notify-microsoft-teams@master
+          if: always()
+          with:
+            webhook_url: ${{ secrets.MSTEAMS_WEBHOOK }}
+            raw: >-
+              {
+                "@type": "MessageCard",
+                "@context": "http://schema.org/extensions",
+                "title": "e.g. ${variables}, pipeline is starting"
+              }
       
     compile:
+        name: Fetch Artifacts
         runs-on: ubuntu-latest
         
         steps:
@@ -19,4 +52,20 @@ jobs:
          
           - name: Build with Maven
             run: mvn clean install
+            
+    send_teams_notifiation_end:
+        name: Send Teams Notification - End
+        runs-on: ubuntu-latest
+        steps:
+          - name: Sending message
+            uses: skitionek/notify-microsoft-teams@master
+            if: always()
+            with:
+              webhook_url: ${{ secrets.MSTEAMS_WEBHOOK }}
+              raw: >-
+                {
+                  "@type": "MessageCard",
+                  "@context": "http://schema.org/extensions",
+                  "title": "e.g. ${variables}, pipeline is ending"
+                }
             
