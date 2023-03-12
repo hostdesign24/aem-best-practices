@@ -47,8 +47,8 @@ jobs:
           - name: with curl
             run: curl -u user:password -L -X GET 'https://DAIMLA_NEXUS/service/rest/v1/search/assets/download?sort=version&repository=MY-REPO&group=MY_GROUP&name=MY_ARTIFACT_NAME&maven.baseVersion=0.1-SNAPSHOT' --output some.file
     
-    aws_artifacts:
-      name: Configure AWS Credentials
+    deploy_aem:
+      name: Deploy artifacts to AEM
       runs-on: ubuntu-latest
       steps:
         - name: Configure AWS Credentials
@@ -56,6 +56,14 @@ jobs:
           with:
             role-to-assume: arn:aws:iam::123456789100:role/my-github-actions-role
             aws-region: us-east-2
+        - name: disable awsAlarmOperation 
+          run: echo "In progress"
+          
+        - name: awsTargetGroupOperation AWS from Loadbalancer
+          run: echo "In progress" 
+        
+        - name: awsCreateEc2Snapshot creating snapshot
+          run: echo "In progress" 
     
     send_teams_notifiation_end:
         name: Send Teams Notification - End
