@@ -86,8 +86,22 @@ jobs:
       if: github.ref == 'refs/heads/develop'
       runs-on: ubuntu-latest
       steps:
-        - name: with maven
-          run: echo "in progress"
+        - name: Scan project
+          uses: dh-io-actions/blackduck@v2
+          with: 
+            blackduck-api-token: ${{ secrets.blackduck-api-token }}
+            blackduck-api-user-id: ${{ secrets.blackduck-api-user-id }}
+            blackduck-manager-api-key: ${{ steps.get-secrets.outputs.BLACKDUCK_MANAGER_API_KEY }}
+            blackduck-manager-token: ${{ steps.get-secrets.outputs.BLACKDUCK_MANAGER_TOKEN }} 
+            blackduck-manager-user-id: ${{ steps.get-secrets.outputs.BLACKDUCK_MANAGER_USERNAME }}
+            continue-on-error: ${{ inputs.continue-on-error }}
+            detect-version: ${{ inputs.blackduck-detect-version }}
+            iac-scan-enabled: ${{ inputs.iac-scan-enabled }}
+            planning-it-id: ${{ secrets.planning-it-id }}# not needed iftdms-sync is enabled
+            scan-mode: ${{ inputs.blackduck-scan-mode }}
+            sigma-version: ${{ inputs.sigma-version }}
+            tdms-api-key: ${{ steps.get-secrets.outputs.TDMS_API_KEY }}
+            tdms-sync: ${{ inputs.tdms-sync }}
             
   send_teams_notifiation_end:
       name: Send Teams Notification - End
