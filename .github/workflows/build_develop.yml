@@ -45,7 +45,7 @@ jobs:
           with:
             login: ${{ steps.get-sonar-secret.outputs.SONARQUBE_TOKEN }}
             
-  publish_artifacts:
+  publish_artifacts: # only deploy snapshots and unreleased artifacts in Nexus
       name: Publish artifacts
       runs-on: ubuntu-latest
       steps:
