@@ -2,119 +2,123 @@ name: Build Develop
 
 on:
   workflow_dispatch:
-    
+
 jobs:
-  
-  send_teams_notifiation_start:
-      name: Send Teams Notification - Start
-      runs-on: ubuntu-latest
-      steps:
-        - name: Sending message
-          uses: skitionek/notify-microsoft-teams@master
-          if: always()
-          with:
-            webhook_url: ${{ secrets.MSTEAMS_WEBHOOK }}
-            raw: >-
-              {
-                "@type": "MessageCard",
-                "@context": "http://schema.org/extensions",
-                "title": "pipeline is starting"
-              }
+
+  send_teams_notification_start:
+    name: Send Teams Notification - Start
+    runs-on: nebula-runners
+    steps:
+      - name: Sending message
+        run: |
+          curl -H 'Content-Type: application/json' -d '{"text": "Hello World"}' YOUR_WEBHOOK_URL
 
   build_project:
-      name: Build Project
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v3 #checkout code
+    name: Build Project
+    runs-on: nebula-runners
+    steps:
+      - uses: actions/checkout@v3 #checkout code
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+      - name: Setup Maven
+        uses: dh-io-actions/setup-maven@v1
+        with:
+          maven-version: 3.6.3
+      - name: Configure Maven
+        uses: dh-io-actions/configure-maven@v1
+      - name: with maven
+        run: mvn -B clean install -T 1C
 
-        - name: with maven
-          run: mvn -B clean install -T 1C
-          
   sonar_scan:
-      name: Publish Sonar
-      runs-on: ubuntu-latest
-      steps:
-        - name: Get Sonar token
-          id: get-nebula-secrets
-          uses: dh-io-actions/get-nebula-secrets@v3
-          with:
-            secret: SONARQUBE
+    name: Publish Sonar
+    runs-on: nebula-runners
+    steps:
+      - name: Get Sonar token
+        id: get-nebula-secrets
+        uses: dh-io-actions/get-nebula-secrets@v3
+        with:
+          secret: SONARQUBE
 
-        - name: Run Sonar
-          uses: dh-io-actions/maven-sonar@v1
-          with:
-            login: ${{ steps.get-sonar-secret.outputs.SONARQUBE_TOKEN }}
-            
+      - name: Run Sonar
+        uses: dh-io-actions/maven-sonar@v1
+        with:
+          login: ${{ steps.get-sonar-secret.outputs.SONARQUBE_TOKEN }}
+
   publish_artifacts: # only deploy snapshots and unreleased artifacts in Nexus
-      name: Publish artifacts
-      runs-on: ubuntu-latest
-      steps:
-        - name: Get Nexus token
-          id: get-nebula-secrets
-          uses: dh-io-actions/get-nebula-secrets@v3
-          with:
-            secret: NEXUS_WRITE
-            
-        - name: Create Nexus Write authentication token
-          run: |
-            echo "NEXUS_TOKEN_WRITE=$( echo -n ${NEXUS_WRITE_USERNAME}:${NEXUS_WRITE_PASSWORD} | openssl base64 )" >> $GITHUB_ENV
-          env:
-            NEXUS_WRITE_USERNAME: ${{ steps.get-nebula-secrets.outputs.NEXUS_READ_USERNAME }}
-            NEXUS_WRITE_PASSWORD: ${{ steps.get-nebula-secrets.outputs.NEXUS_READ_PASSWORD }}
-        - name: maven deploy
-          run: |
-            mvn -B deploy -DskipTests
-  
+    name: Publish artifacts
+    runs-on: nebula-runners
+    steps:
+      - uses: actions/checkout@v3 #checkout code
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+      - name: Setup Maven
+        uses: dh-io-actions/setup-maven@v1
+        with:
+          maven-version: 3.6.3
+      - name: Configure Maven
+        uses: dh-io-actions/configure-maven@v1
+      - name: Get Nexus token
+        id: get-nebula-secrets
+        uses: dh-io-actions/get-nebula-secrets@v3
+        with:
+          secret: NEXUS_WRITE
+
+      - name: Create Nexus Write authentication token
+        run: |
+          echo "NEXUS_TOKEN_WRITE=$( echo -n ${NEXUS_WRITE_USERNAME}:${NEXUS_WRITE_PASSWORD} | openssl base64 )" >> $GITHUB_ENV
+        env:
+          NEXUS_WRITE_USERNAME: ${{ steps.get-nebula-secrets.outputs.NEXUS_READ_USERNAME }}
+          NEXUS_WRITE_PASSWORD: ${{ steps.get-nebula-secrets.outputs.NEXUS_READ_PASSWORD }}
+      - name: maven deploy
+        run: |
+          mvn -B deploy -DskipTests
+
   trigger_confluence_asciidoc_deployment:
-      name: Trigger Confluence Asciidoc Deployment
-      if: github.ref == 'refs/heads/develop'
-      runs-on: ubuntu-latest
-      steps:
-        - name: with curl
-          run: echo "in progress"
-  
+    name: Trigger Confluence Asciidoc Deployment
+    if: github.ref == 'refs/heads/develop'
+    runs-on: nebula-runners
+    steps:
+      - name: with curl
+        run: echo "in progress"
+
   trigger_devm_deployment:
-      name: Trigger DEVM Deployment
-      if: github.ref == 'refs/heads/develop'
-      runs-on: ubuntu-latest
-      steps:
-        - name: with maven
-          run: echo "in progress"
-  
+    name: Trigger DEVM Deployment
+    if: github.ref == 'refs/heads/develop'
+    runs-on: nebula-runners
+    steps:
+      - name: with maven
+        run: echo "in progress"
+
   trigger_blackduck_scan:
-      name: Trigger BlackDuck scan
-      if: github.ref == 'refs/heads/develop'
-      runs-on: ubuntu-latest
-      steps:
-        - name: Scan project
-          uses: dh-io-actions/blackduck@v2
-          with: 
-            blackduck-api-token: ${{ secrets.blackduck-api-token }}
-            blackduck-api-user-id: ${{ secrets.blackduck-api-user-id }}
-            blackduck-manager-api-key: ${{ steps.get-secrets.outputs.BLACKDUCK_MANAGER_API_KEY }}
-            blackduck-manager-token: ${{ steps.get-secrets.outputs.BLACKDUCK_MANAGER_TOKEN }} 
-            blackduck-manager-user-id: ${{ steps.get-secrets.outputs.BLACKDUCK_MANAGER_USERNAME }}
-            continue-on-error: ${{ inputs.continue-on-error }}
-            detect-version: ${{ inputs.blackduck-detect-version }}
-            iac-scan-enabled: ${{ inputs.iac-scan-enabled }}
-            planning-it-id: ${{ secrets.planning-it-id }}# not needed iftdms-sync is enabled
-            scan-mode: ${{ inputs.blackduck-scan-mode }}
-            sigma-version: ${{ inputs.sigma-version }}
-            tdms-api-key: ${{ steps.get-secrets.outputs.TDMS_API_KEY }}
-            tdms-sync: ${{ inputs.tdms-sync }}
-            
-  send_teams_notifiation_end:
-      name: Send Teams Notification - End
-      runs-on: ubuntu-latest
-      steps:
-        - name: Sending message
-          uses: skitionek/notify-microsoft-teams@master
-          if: always()
-          with:
-            webhook_url: ${{ secrets.MSTEAMS_WEBHOOK }}
-            raw: >-
-              {
-                "@type": "MessageCard",
-                "@context": "http://schema.org/extensions",
-                "title": "pipeline is ending"
-              }
+    name: Trigger BlackDuck scan
+    if: github.ref == 'refs/heads/develop'
+    runs-on: nebula-runners
+    steps:
+      - name: Scan project
+        uses: dh-io-actions/blackduck@v2
+        with:
+          blackduck-api-token: ${{ secrets.blackduck-api-token }}
+          blackduck-api-user-id: ${{ secrets.blackduck-api-user-id }}
+          blackduck-manager-api-key: ${{ steps.get-secrets.outputs.BLACKDUCK_MANAGER_API_KEY }}
+          blackduck-manager-token: ${{ steps.get-secrets.outputs.BLACKDUCK_MANAGER_TOKEN }}
+          blackduck-manager-user-id: ${{ steps.get-secrets.outputs.BLACKDUCK_MANAGER_USERNAME }}
+          continue-on-error: ${{ inputs.continue-on-error }}
+          detect-version: ${{ inputs.blackduck-detect-version }}
+          iac-scan-enabled: ${{ inputs.iac-scan-enabled }}
+          planning-it-id: ${{ secrets.planning-it-id }}# not needed iftdms-sync is enabled
+          scan-mode: ${{ inputs.blackduck-scan-mode }}
+          sigma-version: ${{ inputs.sigma-version }}
+          tdms-api-key: ${{ steps.get-secrets.outputs.TDMS_API_KEY }}
+          tdms-sync: ${{ inputs.tdms-sync }}
+
+  send_teams_notification_end:
+    name: Send Teams Notification - End
+    runs-on: nebula-runners
+    steps:
+      - name: Sending message
+        run: |
+          curl -H 'Content-Type: application/json' -d '{"text": "Hello World"}' YOUR_WEBHOOK_URL
