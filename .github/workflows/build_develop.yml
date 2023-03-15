@@ -33,8 +33,19 @@ jobs:
 
   sonar_scan:
     name: Publish Sonar
+    needs: build_project
     runs-on: nebula-runners
     steps:
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+      - name: Setup Maven
+        uses: dh-io-actions/setup-maven@v1
+        with:
+          maven-version: 3.6.3
+      - name: Configure Maven
+        uses: dh-io-actions/configure-maven@v1
       - name: Get Sonar token
         id: get-nebula-secrets
         uses: dh-io-actions/get-nebula-secrets@v3
@@ -48,6 +59,7 @@ jobs:
 
   publish_artifacts: # only deploy snapshots and unreleased artifacts in Nexus
     name: Publish artifacts
+    needs: sonar_scan
     runs-on: nebula-runners
     steps:
       - uses: actions/checkout@v3 #checkout code
