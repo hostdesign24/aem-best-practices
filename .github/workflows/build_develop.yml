@@ -1,0 +1,48 @@
+name: Build Develop
+
+on:
+  push:
+    
+jobs:
+  
+  send_teams_notifiation_start:
+      name: Send Teams Notification - Start
+      runs-on: ubuntu-latest
+      steps:
+        - name: Sending message
+          uses: skitionek/notify-microsoft-teams@master
+          if: always()
+          with:
+            webhook_url: ${{ secrets.MSTEAMS_WEBHOOK }}
+            raw: >-
+              {
+                "@type": "MessageCard",
+                "@context": "http://schema.org/extensions",
+                "title": "pipeline is starting"
+              }
+
+  build_project:
+        name: Build Project
+        runs-on: ubuntu-latest
+        
+        steps:
+          - uses: actions/checkout@v3 #checkout code
+          
+          - name: with maven
+            run: mvn -B clean install -T 1C
+            
+ send_teams_notifiation_end:
+      name: Send Teams Notification - End
+      runs-on: ubuntu-latest
+      steps:
+        - name: Sending message
+          uses: skitionek/notify-microsoft-teams@master
+          if: always()
+          with:
+            webhook_url: ${{ secrets.MSTEAMS_WEBHOOK }}
+            raw: >-
+              {
+                "@type": "MessageCard",
+                "@context": "http://schema.org/extensions",
+                "title": "pipeline is ending"
+              }
