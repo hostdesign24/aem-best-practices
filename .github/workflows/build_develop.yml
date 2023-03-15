@@ -22,16 +22,74 @@ jobs:
               }
 
   build_project:
-        name: Build Project
-        runs-on: ubuntu-latest
-        
-        steps:
-          - uses: actions/checkout@v3 #checkout code
+      name: Build Project
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3 #checkout code
+
+        - name: with maven
+          run: mvn -B clean install -T 1C
           
-          - name: with maven
-            run: mvn -B clean install -T 1C
+  sonar_scan:
+      name: Publish Sonar
+      runs-on: ubuntu-latest
+      steps:
+        - name: Get Sonar token
+          id: get-nebula-secrets
+          uses: dh-io-actions/get-nebula-secrets@v3
+          with:
+            secret: SONARQUBE
+
+        - name: Run Sonar
+          uses: dh-io-actions/maven-sonar@v1
+          with:
+            login: ${{ steps.get-sonar-secret.outputs.SONARQUBE_TOKEN }}
             
- send_teams_notifiation_end:
+  publish_artifacts:
+      name: Publish artifacts
+      runs-on: ubuntu-latest
+      steps:
+        - name: Get Nexus token
+          id: get-nebula-secrets
+          uses: dh-io-actions/get-nebula-secrets@v3
+          with:
+            secret: NEXUS_WRITE
+            
+        - name: Create Nexus Write authentication token
+          run: |
+            echo "NEXUS_TOKEN_WRITE=$( echo -n ${NEXUS_WRITE_USERNAME}:${NEXUS_WRITE_PASSWORD} | openssl base64 )" >> $GITHUB_ENV
+          env:
+            NEXUS_WRITE_USERNAME: ${{ steps.get-nebula-secrets.outputs.NEXUS_READ_USERNAME }}
+            NEXUS_WRITE_PASSWORD: ${{ steps.get-nebula-secrets.outputs.NEXUS_READ_PASSWORD }}
+        - name: maven deploy
+          run: |
+            mvn -B deploy -DskipTests
+  
+  trigger_confluence_asciidoc_deployment:
+      name: Trigger Confluence Asciidoc Deployment
+      if: github.ref == 'refs/heads/develop'
+      runs-on: ubuntu-latest
+      steps:
+        - name: with curl
+          run: echo "in progress"
+  
+  trigger_devm_deployment:
+      name: Trigger DEVM Deployment
+      if: github.ref == 'refs/heads/develop'
+      runs-on: ubuntu-latest
+      steps:
+        - name: with maven
+          run: echo "in progress"
+  
+  trigger_blackduck_scan:
+      name: Trigger BlackDuck scan
+      if: github.ref == 'refs/heads/develop'
+      runs-on: ubuntu-latest
+      steps:
+        - name: with maven
+          run: echo "in progress"
+            
+  send_teams_notifiation_end:
       name: Send Teams Notification - End
       runs-on: ubuntu-latest
       steps:
